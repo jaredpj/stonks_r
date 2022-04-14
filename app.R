@@ -10,6 +10,7 @@
 library(shiny)
 library(shinyWidgets)
 library(tidyverse)
+library(shinycssloaders)
 
 # Default job message
 msg<-'No job running.'
@@ -59,8 +60,11 @@ ui <- fluidPage(
     )
     
     # Show a plot of the generated distribution
-    , mainPanel(plotOutput('price_plot')
-                , plotOutput('vol_plot')
+    , mainPanel(plotOutput('price_plot'
+                           , width = 830)
+                , plotOutput('vol_plot'
+                             , width = 750
+                             )
     )
   )
 )
@@ -92,6 +96,7 @@ server <- function(input, output, session) {
       theme_bw()+
       theme(legend.title = element_blank()
             , panel.background = element_blank()
+            , text = element_text(size = 20)
       )
   })
   
@@ -112,7 +117,8 @@ server <- function(input, output, session) {
              , subtitle = 'Trade volumes by the minute'
         )+
         theme_bw()+
-        theme(panel.background = element_blank())
+        theme(panel.background = element_blank()
+              , text=element_text(size = 20))
     }
     
   })

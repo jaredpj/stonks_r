@@ -9,6 +9,7 @@ gc()
 # Call libraries
 library(tidyverse)
 library(reshape2)
+library(forecast)
 
 # Get data
 load('~/Documents/GitHub Repos/stonks_r/stonks.rdata')
@@ -71,3 +72,13 @@ vol_plot<-
   theme(legend.title = element_blank()
         , panel.background = element_blank()
         )
+
+
+### Time series forecasting
+ts_df<-df[which(df$ticker=='DIS' 
+                & df$metric=='open' 
+                & as.Date(df$timestamp)==max(as.Date(df$timestamp)))
+          , c('timestamp', 'value')]
+
+fit<-auto.arima(head(ts_df, ceiling(nrow(ts_df)*.9)), allowdrift = T, allowmean = T)
+plot(forecast(fit, h=50))
