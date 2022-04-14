@@ -13,3 +13,13 @@ For the purposes of demonstrating my ability to generate reporting in R Shiny, I
 In order to keep it simple, I decided to forgo a directory structure. I would not advise this for a production application, but for the sake of expediency here, I've opted to keep it flat.
 
 ## Dependencies
+- tidyverse
+- reshape2
+- alphavantager
+- shiny
+- shinyWidgets
+- shinycssloaders
+- forecast
+
+# Setup
+This app was developed on R v4.1.2. Run setup.R to install dependencies.
