@@ -16,7 +16,7 @@ library(shinycssloaders)
 msg<-'No job running.'
 
 # Read in data frame
-load('~/Documents/GitHub Repos/stonks_r/stonks.rdata')
+load('data/stonks.rdata')
 
 # Light data cleaning
 df$metric<-str_to_title(df$metric)
@@ -74,7 +74,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$refresh_data,{
     message('Running ETL.')
-    source('stonks_etl.R')
+    source('etl/stonks_etl.R')
   })
   
   output$price_plot<-renderPlot({
