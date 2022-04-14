@@ -23,3 +23,14 @@ In order to keep it simple, I decided to forgo a directory structure. I would no
 
 # Setup
 This app was developed on R v4.1.2. Run setup.R to install dependencies.
+
+# Files
+`stonks_etl.R` is an ETL script that pulls all available intraday data (previous two weeks) for ten stocks at the minute level from the Alpha-Vantage API. There is a built in 30 second delay because you are only allowed to make a certain amount of API calls in a given time span. The script takes approximately five minutes to run. This script outputs `stonks.rdata`.
+
+`app.R` is the Shiny application file.
+
+`stonks.rdata` contains intraday price and volume data in a minute-level time series of ten stocks. Data acquired from Alpha-Vantage API.
+
+`20220414_Stonks_Dev.R` is development code for the application.
+
+
