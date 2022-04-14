@@ -3,8 +3,8 @@
 
 # Call libraries
 library(tidyverse)
-library(reshape2)
 library(alphavantager)
+library(reshape2)
 
 # Define tickers
 tickers<-c('DIS', 'MSFT', 'WFC', 'V', 'AAPL'
@@ -42,7 +42,12 @@ for (i in 1:length(tickers)){
 }
 
 # Bind data frame list into single data frame
-df<-bind_rows(df_list)
+# Melt: user to select open, close, high, low, volume for plotting
+df<-melt(bind_rows(df_list)
+         , id.vars = c('ticker', 'timestamp')
+         , variable.name = 'metric'
+         , value.name = 'value'
+         )
 
 # Export to .rdata (more memory efficient for production)
 save(df, file = 'stonks.rdata')
