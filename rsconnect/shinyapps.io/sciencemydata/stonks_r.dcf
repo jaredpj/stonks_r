@@ -1,0 +1,11 @@
+name: stonks_r
+title:
+username:
+account: sciencemydata
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6098172
+bundleId: 5803218
+url: https://sciencemydata.shinyapps.io/stonks_r/
+when: 1650049629.92005
+lastSyncTime: 1650049629.92006

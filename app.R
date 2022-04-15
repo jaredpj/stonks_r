@@ -12,15 +12,13 @@ library(shinyWidgets)
 library(tidyverse)
 library(shinycssloaders)
 
-# Default job message
-msg<-'No job running.'
+# Get Data from API
+source('etl/stonks_etl.R')
 
-# Read in data frame
 load('data/stonks.rdata')
 
-# Light data cleaning
-df$metric<-str_to_title(df$metric)
-df$date<-as.Date(df$timestamp)
+# Read log_file
+log_file<-read_file('log_file.txt')
 
 # Basic application UI
 ui <- fluidPage(
@@ -53,31 +51,48 @@ ui <- fluidPage(
                       , label = 'Show volumes?'
                       , value = T
       )
-      , actionButton('refresh_data'
-                     , "Refresh Data"
-                     #, size = 'sm'
-      )
+      # , actionButton('refresh_data'
+      #                , "Refresh Data"
+      # )
     )
     
     # Show a plot of the generated distribution
-    , mainPanel(plotOutput('price_plot'
-                           , width = 830)
-                , plotOutput('vol_plot'
-                             , width = 750
-                             )
-    )
+    , mainPanel(
+        tabsetPanel(type = "tab"
+                    , tabPanel("Time Series"
+                               , plotOutput('price_plot', width = 830)
+                               , plotOutput('vol_plot', width = 750)
+                               )
+                    , tabPanel("Raw Data"
+                               , dataTableOutput('df_table')
+                               )
+                    )
+              )
   )
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  observeEvent(input$refresh_data,{
-    message('Running ETL.')
-    source('etl/stonks_etl.R')
-  })
+  
+  data_refresh<-reactivePoll(intervalMillis = 86400000
+                            , session
+                            , valueFunc = function() {
+                                get_av_data(save_file = T
+                                            , file_path = 'data/stonks.rdata'
+                                )
+                              }
+                            , checkFunc = function() {
+                              if (file.exists(log_file))
+                                file.info(log_file)$mtime[1]
+                              else
+                                ""
+                            })
+  
+  output$df_table<-renderDataTable({df})
   
   output$price_plot<-renderPlot({
+
     ggplot(data = df[which(df$ticker %in% input$tickers
                            & as.character(df$date) %in% input$date
                            & df$metric %in% input$metric),]
@@ -101,7 +116,6 @@ server <- function(input, output, session) {
   })
   
   output$vol_plot<-renderPlot({
-    
     if(input$show_vol==T){
       ggplot(data = df[which(df$ticker %in% input$tickers
                              & as.character(df$date) %in% input$date
