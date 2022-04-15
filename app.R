@@ -7,10 +7,16 @@
 #    http://shiny.rstudio.com/
 #
 
+### ---------------------------------- ###
+### READ IN TXT FILE WITH YOUR API KEY ###
+### ---------------------------------- ###
+key<-read_file('av_api_key.txt')
+
+# Call libs
 library(shiny)
 library(shinyWidgets)
 library(tidyverse)
-library(shinycssloaders)
+library(plotly)
 
 # Get Data from API
 source('etl/stonks_etl.R')
@@ -60,8 +66,8 @@ ui <- fluidPage(
     , mainPanel(
         tabsetPanel(type = "tab"
                     , tabPanel("Time Series"
-                               , plotOutput('price_plot', width = 830)
-                               , plotOutput('vol_plot', width = 750)
+                               , plotlyOutput('price_plot', width = 830)
+                               , plotlyOutput('vol_plot', width = 750)
                                )
                     , tabPanel("Raw Data"
                                , dataTableOutput('df_table')
@@ -74,11 +80,11 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  
   data_refresh<-reactivePoll(intervalMillis = 86400000
                             , session
                             , valueFunc = function() {
-                                get_av_data(save_file = T
+                                get_av_data(api_key = key
+                                            , save_file = T
                                             , file_path = 'data/stonks.rdata'
                                 )
                               }
@@ -91,39 +97,43 @@ server <- function(input, output, session) {
   
   output$df_table<-renderDataTable({df})
   
-  output$price_plot<-renderPlot({
-
-    ggplot(data = df[which(df$ticker %in% input$tickers
+  output$price_plot<-renderPlotly({
+      price<-ggplot(data = df[which(df$ticker %in% input$tickers
                            & as.character(df$date) %in% input$date
                            & df$metric %in% input$metric),]
            , aes(x = timestamp
                  , y = value
                  , group = metric
-           )
-    )+
+                 , text = value
+                 )
+           )+
       geom_line(aes(color = metric), alpha = .8)+
       facet_wrap(~ticker, scales = 'free')+
       labs(y = 'Price (USD)'
            , x = 'Time'
            , title = 'Intraday Stock Trading'
            , subtitle = 'Prices by the minute'
-      )+
+           )+
       theme_bw()+
       theme(legend.title = element_blank()
             , panel.background = element_blank()
-            , text = element_text(size = 20)
-      )
+            , text = element_text(size = 10)
+            , 
+            )
+    ggplotly(price, tooltip = 'text')
+    
   })
   
-  output$vol_plot<-renderPlot({
+  output$vol_plot<-renderPlotly({
     if(input$show_vol==T){
-      ggplot(data = df[which(df$ticker %in% input$tickers
+      vol<-ggplot(data = df[which(df$ticker %in% input$tickers
                              & as.character(df$date) %in% input$date
                              & df$metric %in% c('Volume')),]
              , aes(x = timestamp
                    , y = value
-             )
-      )+
+                   , text = value
+                   )
+             )+
         geom_line(alpha = .5)+
         facet_wrap(~ticker, scales = 'free')+
         labs(y = 'Trade Volume'
@@ -132,7 +142,8 @@ server <- function(input, output, session) {
         )+
         theme_bw()+
         theme(panel.background = element_blank()
-              , text=element_text(size = 20))
+              , text=element_text(size = 10))
+      ggplotly(vol, tooltip = 'text')
     }
     
   })

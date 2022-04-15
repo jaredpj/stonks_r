@@ -8,7 +8,7 @@ library(reshape2)
 
 get_av_data<-function(
   tickers = c('DIS', 'MSFT', 'WFC', 'V', 'AAPL', 'SQ', 'XLY', 'XLK', 'INTC', 'MRNA')
-  , api_key = 'JFWC5K8EAVN6SWO6'
+  , api_key = ''
   , save_file = F
   , filepath = paste(Sys.Date(), '_av_data.rdata', sep = '')
   ){

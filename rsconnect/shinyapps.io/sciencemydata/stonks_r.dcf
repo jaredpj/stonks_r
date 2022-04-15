@@ -5,7 +5,7 @@ account: sciencemydata
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6098172
-bundleId: 5803218
+bundleId: 5803416
 url: https://sciencemydata.shinyapps.io/stonks_r/
-when: 1650049629.92005
-lastSyncTime: 1650049629.92006
+when: 1650053293.96443
+lastSyncTime: 1650053293.96444
