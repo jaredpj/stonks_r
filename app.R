@@ -7,21 +7,29 @@
 #    http://shiny.rstudio.com/
 #
 
-### ---------------------------------- ###
-### READ IN TXT FILE WITH YOUR API KEY ###
-### ---------------------------------- ###
-key<-read_file('av_api_key.txt')
+# Clear the environment
+rm(list = ls())
+gc()
 
 # Call libs
 library(shiny)
 library(shinyWidgets)
 library(tidyverse)
 library(plotly)
+library(forecast)
+
+### ---------------------------------- ###
+### READ IN TXT FILE WITH YOUR API KEY ###
+### ---------------------------------- ###
+key<-read_file('av_api_key.txt')
+### ---------------------------------- ###
 
 # Get Data from API
 source('etl/stonks_etl.R')
+source('etl/stock_forecaster.R')
 
 load('data/stonks.rdata')
+load('data/forecasts.rdata')
 
 # Read log_file
 log_file<-read_file('log_file.txt')
@@ -69,6 +77,9 @@ ui <- fluidPage(
                                , plotlyOutput('price_plot', width = 830)
                                , plotlyOutput('vol_plot', width = 750)
                                )
+                    , tabPanel("1hr Forecast"
+                               , plotlyOutput('forecast')
+                               )
                     , tabPanel("Raw Data"
                                , dataTableOutput('df_table')
                                )
@@ -80,6 +91,10 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
+  # Automated data refresh (~10min):
+  # - Data pull from Alpha Vantage (~2min)
+  # - Run forecasting for each ticker (~8min)
+  # Trying to time in off hours.
   data_refresh<-reactivePoll(intervalMillis = 86400000
                             , session
                             , valueFunc = function() {
@@ -87,6 +102,9 @@ server <- function(input, output, session) {
                                             , save_file = T
                                             , file_path = 'data/stonks.rdata'
                                 )
+                                fc<-run_forecast(df, df$ticker)
+                                save(fc, file = 'data/forecasts.rdata')
+                              
                               }
                             , checkFunc = function() {
                               if (file.exists(log_file))
@@ -95,8 +113,10 @@ server <- function(input, output, session) {
                                 ""
                             })
   
+  # Render the data frame so we can inspect it.
   output$df_table<-renderDataTable({df})
   
+  # Plot price(s) over time
   output$price_plot<-renderPlotly({
       price<-ggplot(data = df[which(df$ticker %in% input$tickers
                            & as.character(df$date) %in% input$date
@@ -124,6 +144,7 @@ server <- function(input, output, session) {
     
   })
   
+  # Plot volume of trades over time
   output$vol_plot<-renderPlotly({
     if(input$show_vol==T){
       vol<-ggplot(data = df[which(df$ticker %in% input$tickers
@@ -146,6 +167,25 @@ server <- function(input, output, session) {
       ggplotly(vol, tooltip = 'text')
     }
     
+  })
+  
+  # Plot forecast for first 60 minutes of the next day.
+  # Designed to do one at a time, so added a little error trap.
+  output$forecast<-renderPlotly({
+    
+    if(length(input$tickers)>1){
+      text = "Please select a single ticker to plot forecast."
+      msg <- ggplotly(
+        ggplot() + 
+        annotate("text", x = 4, y = 25, size=8, label = text) + 
+        theme_void()
+        )
+      msg
+    }
+    
+    if(length(input$tickers)==1){
+      ggplotly(forecasts[[input$tickers]])
+    }
   })
   
 }
